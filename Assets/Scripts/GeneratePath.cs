@@ -3,57 +3,170 @@ using System.Collections;
 
 public class GeneratePath : MonoBehaviour {
     private GameObject pathPiece;
+    private Quaternion oldPathPieceRot;
     private GameObject endPoint;
     [SerializeField] private GameObject pathPiecePrefab;
+    [SerializeField] private Transform path;
+
+    private char dirChoice;
 
     // Start is called before the first frame update
     void Start() {
         pathPiece = Instantiate(pathPiecePrefab, Vector3.zero, Quaternion.identity);
+        oldPathPieceRot = pathPiece.transform.rotation;
+        //pathPiece.transform.parent = path;
         endPoint = pathPiece.transform.GetChild(0).gameObject;
     }
 
-    // Update is called once per frame
     void Update() {
 
     }
 
     private Vector3 spawnPosition;
-    private Vector3 spawnRotation;
+    private int spawnRotation;
     public void Generate() {
-        GetSpawnPos(out spawnPosition, out spawnRotation);
+        GetSpawnPos(out spawnPosition, out spawnRotation, out dirChoice);
 
-        pathPiece = Instantiate(pathPiecePrefab, spawnPosition, Quaternion.Euler(spawnRotation));
+        pathPiece = Instantiate(pathPiecePrefab, spawnPosition, oldPathPieceRot);
+        pathPiece.transform.Rotate(Vector3.up, spawnRotation);
+
+        if (dirChoice != 'F') {
+            pathPiece.transform.position += pathPiece.transform.right * (pieceLength / 2);
+        }
+
+        //pathPiece.transform.parent = path;
     }
 
-    private void GetSpawnPos(out Vector3 spawnPos, out Vector3 spawnRot) {
+    private float pieceLength;
+    private float pieceWidth;
+    private RaycastHit hit;
+    private Ray ray;
+    [SerializeField] private LayerMask roadPieces;
+    private void GetSpawnPos(out Vector3 spawnPos, out int spawnRot, out char finalDirection) {
+        finalDirection = ' ';
+
         endPoint = pathPiece.transform.GetChild(0).gameObject;
 
-        float pieceLength;
-        float pieceWidth;
+        oldPathPieceRot = pathPiece.transform.rotation;
 
-        Vector3 endPointWorldPos = Vector3.zero;
+        int directionChoice;
+
+        Vector3 endPointPos = endPoint.transform.position;
 
         spawnPos = Vector3.zero;
-        spawnRot = Vector3.zero;
-
-        float directionChoice;
+        spawnRot = 0;
 
         pieceLength = pathPiece.transform.localScale.x;
         pieceWidth = pathPiece.transform.localScale.z;
 
-        directionChoice = (int)Random.Range(0, 3);
+        if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
 
-        if (directionChoice == 0) {
-            spawnRot = Vector3.zero;
-            spawnPos = endPoint.transform.position + new Vector3());
-        } else if (directionChoice == 1) {
-            spawnPos = endPoint.transform.TransformPoint(new Vector3(pieceLength / 2, 0, 0));
-            spawnRot = new Vector3(0, 90, 0);
-        } else if (directionChoice == 2) {
-            spawnPos = endPoint.transform.TransformPoint(new Vector3(-pieceLength / 2, 0, 0));
-            spawnRot = new Vector3(0, 90, 0);
+            directionChoice = (int)Random.Range(0, 2);
+
+            switch (directionChoice) {
+                case 0:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+                        finalDirection = 'R';
+                    } else {
+                        finalDirection = 'L';
+                    }
+                    break;
+                case 1:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+                        finalDirection = 'L';
+                    } else {
+                        finalDirection = 'R';
+                    }
+                    break;
+            }
+
+        } else if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+
+            directionChoice = (int)Random.Range(0, 2);
+
+            switch (directionChoice) {
+                case 0:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
+                        finalDirection = 'F';
+                    } else {
+                        finalDirection = 'L';
+                    }
+                    break;
+                case 1:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+                        finalDirection = 'L';
+                    } else {
+                        finalDirection = 'F';
+                    }
+                    break;
+            }
+        } else if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+
+            directionChoice = (int)Random.Range(0, 2);
+
+            switch (directionChoice) {
+                case 0:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
+                        finalDirection = 'F';
+                    } else {
+                        finalDirection = 'R';
+                    }
+                    break;
+                case 1:
+                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+                        finalDirection = 'R';
+                    } else {
+                        finalDirection = 'F';
+                    }
+                    break;
+            }
+        } else {
+            directionChoice = (int)Random.Range(0, 3);
+
+            switch (directionChoice) {
+                case 0:
+                    finalDirection = 'F';
+                    break;
+                case 1:
+                    finalDirection = 'L';
+                    break;
+                case 2:
+                    finalDirection = 'R';
+                    break;
+            }
         }
 
-        Debug.Log($"direction choice: {directionChoice}");
+        //directionChoice = (int)Random.Range(0, 3);
+
+        //if (directionChoice == 0) {
+        //    finalDirection = 'F';
+        //} else if (directionChoice == 1) {
+        //    finalDirection = 'R';
+        //} else if (directionChoice == 2) {
+        //    finalDirection = 'L';
+        //}
+
+        switch (finalDirection) {
+            case 'F':
+                spawnPos = endPointPos += new Vector3(pieceLength / 2, 0, 0);
+                spawnRot = (int)oldPathPieceRot.y;
+                break;
+            case 'L':
+                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
+                spawnRot = -90;
+                break;
+            case 'R':
+                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
+                spawnRot = 90;
+                break;
+        }
+
+        Debug.Log($"direction choice: {finalDirection}");
     }
 }
