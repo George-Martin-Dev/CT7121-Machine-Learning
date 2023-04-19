@@ -1,5 +1,6 @@
 using UnityEngine;
-using System.Collections;
+using Unity.Mathematics;
+using System.Runtime.CompilerServices;
 
 public class GeneratePath : MonoBehaviour {
     private GameObject pathPiece;
@@ -23,12 +24,16 @@ public class GeneratePath : MonoBehaviour {
     }
 
     private Vector3 spawnPosition;
-    private int spawnRotation;
+    private char spawnRotation;
     public void Generate() {
-        GetSpawnPos(out spawnPosition, out spawnRotation, out dirChoice);
+        oldPathPieceRot = pathPiece.transform.rotation;
+
+        SetSpawnPos(out spawnPosition, out spawnRotation);
 
         pathPiece = Instantiate(pathPiecePrefab, spawnPosition, oldPathPieceRot);
-        pathPiece.transform.Rotate(Vector3.up, spawnRotation);
+
+        PieceInfo PI = pathPiece.GetComponent<PieceInfo>();
+        PI.direction = dir;
 
         if (dirChoice != 'F') {
             pathPiece.transform.position += pathPiece.transform.right * (pieceLength / 2);
@@ -39,42 +44,65 @@ public class GeneratePath : MonoBehaviour {
 
     private float pieceLength;
     private float pieceWidth;
+    private int directionChoice;
+    private char dir;
+    Vector3 endPointPos;
     private RaycastHit hit;
     private Ray ray;
     [SerializeField] private LayerMask roadPieces;
-    private void GetSpawnPos(out Vector3 spawnPos, out int spawnRot, out char finalDirection) {
-        finalDirection = ' ';
+    private void SetSpawnPos(out Vector3 spawnPos, out char spawnRot) {
 
         endPoint = pathPiece.transform.GetChild(0).gameObject;
 
-        oldPathPieceRot = pathPiece.transform.rotation;
-
-        int directionChoice;
-
-        Vector3 endPointPos = endPoint.transform.position;
+        endPointPos = endPoint.transform.position;
 
         spawnPos = Vector3.zero;
-        spawnRot = 0;
+        spawnRot = ' ';
+
+        float newRot;
 
         pieceLength = pathPiece.transform.localScale.x;
         pieceWidth = pathPiece.transform.localScale.z;
 
-        if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
+        dir = ChooseDirection();
 
-            directionChoice = (int)Random.Range(0, 2);
+        switch (dir) {
+            case 'F':
+                spawnPos = endPointPos += new Vector3(pieceLength / 2, 0, 0);
+                spawnRot = 'F';
+                break;
+            case 'L':
+                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
+                spawnRot = 'L';
+                break;
+            case 'R':
+                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
+                newRot = Mathf.Round(oldPathPieceRot.y + 90);
+                spawnRot = 'R';
+                break;
+        }
+    }
+
+    private char ChooseDirection() {
+        char finalDirection = ' ';
+        Vector3 rayStartPos = endPointPos + pathPiece.transform.forward * 2;
+
+        if (Physics.Raycast(rayStartPos, pathPiece.transform.right, 20f, roadPieces)) {
+
+            directionChoice = (int)UnityEngine.Random.Range(0, 2);
 
             switch (directionChoice) {
                 case 0:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, pathPiece.transform.forward, 20f, roadPieces)) {
                         finalDirection = 'R';
                     } else {
                         finalDirection = 'L';
                     }
                     break;
                 case 1:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, -pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, -pathPiece.transform.forward, 20f, roadPieces)) {
                         finalDirection = 'L';
                     } else {
                         finalDirection = 'R';
@@ -82,44 +110,44 @@ public class GeneratePath : MonoBehaviour {
                     break;
             }
 
-        } else if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+        } else if (Physics.Raycast(rayStartPos, pathPiece.transform.forward, 20f, roadPieces)) {
 
-            directionChoice = (int)Random.Range(0, 2);
+            directionChoice = (int)UnityEngine.Random.Range(0, 2);
 
             switch (directionChoice) {
                 case 0:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, pathPiece.transform.right * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, pathPiece.transform.right, 20f, roadPieces)) {
                         finalDirection = 'F';
                     } else {
                         finalDirection = 'L';
                     }
                     break;
                 case 1:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, -pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, -pathPiece.transform.forward, 20f, roadPieces)) {
                         finalDirection = 'L';
                     } else {
                         finalDirection = 'F';
                     }
                     break;
             }
-        } else if (Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, -pathPiece.transform.forward, 20f, roadPieces)) {
+        } else if (Physics.Raycast(rayStartPos, -pathPiece.transform.forward, 20f, roadPieces)) {
 
-            directionChoice = (int)Random.Range(0, 2);
+            directionChoice = (int)UnityEngine.Random.Range(0, 2);
 
             switch (directionChoice) {
                 case 0:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.right, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, pathPiece.transform.right * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, pathPiece.transform.right, 20f, roadPieces)) {
                         finalDirection = 'F';
                     } else {
                         finalDirection = 'R';
                     }
                     break;
                 case 1:
-                    Debug.DrawRay(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward * 20, Color.red);
-                    if (!Physics.Raycast(endPointPos + pathPiece.transform.forward * 2, pathPiece.transform.forward, 20f, roadPieces)) {
+                    Debug.DrawRay(rayStartPos, pathPiece.transform.forward * 20, Color.red);
+                    if (!Physics.Raycast(rayStartPos, pathPiece.transform.forward, 20f, roadPieces)) {
                         finalDirection = 'R';
                     } else {
                         finalDirection = 'F';
@@ -127,7 +155,7 @@ public class GeneratePath : MonoBehaviour {
                     break;
             }
         } else {
-            directionChoice = (int)Random.Range(0, 3);
+            directionChoice = (int)UnityEngine.Random.Range(0, 3);
 
             switch (directionChoice) {
                 case 0:
@@ -142,31 +170,6 @@ public class GeneratePath : MonoBehaviour {
             }
         }
 
-        //directionChoice = (int)Random.Range(0, 3);
-
-        //if (directionChoice == 0) {
-        //    finalDirection = 'F';
-        //} else if (directionChoice == 1) {
-        //    finalDirection = 'R';
-        //} else if (directionChoice == 2) {
-        //    finalDirection = 'L';
-        //}
-
-        switch (finalDirection) {
-            case 'F':
-                spawnPos = endPointPos += new Vector3(pieceLength / 2, 0, 0);
-                spawnRot = (int)oldPathPieceRot.y;
-                break;
-            case 'L':
-                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
-                spawnRot = -90;
-                break;
-            case 'R':
-                spawnPos = endPointPos += new Vector3(pieceWidth / 2, 0, 0);
-                spawnRot = 90;
-                break;
-        }
-
-        Debug.Log($"direction choice: {finalDirection}");
+        return finalDirection;
     }
 }
