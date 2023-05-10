@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour {
     // Object that holds all race track pieces
     [SerializeField] private GameObject[] tracks;
     private GameObject track;
-    [HideInInspector] public List<Transform> checkPoints = new List<Transform>();
+    [HideInInspector]
 
     private GameObject startPiece;
     private GameObject endPiece;
@@ -67,13 +67,26 @@ public class GameManager : MonoBehaviour {
 
     public void ChooseTrack() {
         CurrentGameState = GameState.PLAYING;
-        track = Instantiate(tracks[Int16.Parse(EventSystem.current.currentSelectedGameObject.tag)], Vector3.zero, Quaternion.Euler(0, -90, 0));
-        startPiece = track.transform.GetChild(0).gameObject;
-        endPiece = track.transform.GetChild(track.transform.childCount - 1).gameObject;
 
-        car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 1.1f, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
+        int trackNumber = Int16.Parse(EventSystem.current.currentSelectedGameObject.tag);
+        Vector3 spawnPos;
+        Vector3 previousSpawnPos = Vector3.zero;
 
-        GetCheckPoints();
+        for (int i = 0; i < 8; i++) {
+            if (i == 0) {
+                spawnPos = Vector3.zero;
+            } else {
+                spawnPos = new Vector3(previousSpawnPos.x + 150, previousSpawnPos.y, previousSpawnPos.z);
+            }
+            track = Instantiate(tracks[trackNumber], spawnPos, Quaternion.Euler(0, -90, 0));
+            previousSpawnPos = track.transform.position;
+            startPiece = track.transform.GetChild(0).gameObject;
+            endPiece = track.transform.GetChild(track.transform.childCount - 1).gameObject;
+
+            car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 2, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
+
+            GetCheckPoints();
+        }
     }
 
     /// <summary>
@@ -81,7 +94,7 @@ public class GameManager : MonoBehaviour {
     /// </summary>
     private void GetCheckPoints() {
         for (int i = 1; i < track.transform.childCount - 1; i++) {
-            checkPoints.Add(track.transform.GetChild(i).GetChild(0));
+            car.GetComponent<CarAgent>().checkPoints.Add(track.transform.GetChild(i).GetChild(0));
         }
     }
 }
