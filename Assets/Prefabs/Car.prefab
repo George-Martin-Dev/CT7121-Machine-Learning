@@ -138,12 +138,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 1
+    VectorObservationSize: 10
     NumStackedVectorObservations: 8
     m_ActionSpec:
-      m_NumContinuousActions: 4
+      m_NumContinuousActions: 6
       BranchSizes: 
-    VectorActionSize: 04000000
+    VectorActionSize: 06000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 1
     hasUpgradedBrainParametersWithActionSpec: 1
@@ -170,10 +170,12 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 5000
+  MaxStep: 7000
   rb: {fileID: 3719068369275875583}
   frontOfCar: {fileID: 8939381949644324172}
+  boostCheckpoint: {fileID: 0}
   checkPoints: []
+  speed: 30
   rotationSpeed: 100
 --- !u!114 &8939381949824279112
 MonoBehaviour:

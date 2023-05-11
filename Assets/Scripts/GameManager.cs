@@ -14,6 +14,8 @@ public class GameManager : MonoBehaviour {
     private GameObject startPiece;
     private GameObject endPiece;
 
+    private Transform boostCheckpoint;
+
     [SerializeField] private GameObject carPrefab;
     private GameObject car;
 
@@ -72,7 +74,7 @@ public class GameManager : MonoBehaviour {
         Vector3 spawnPos;
         Vector3 previousSpawnPos = Vector3.zero;
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 12; i++) {
             if (i == 0) {
                 spawnPos = Vector3.zero;
             } else {
@@ -82,6 +84,7 @@ public class GameManager : MonoBehaviour {
             previousSpawnPos = track.transform.position;
             startPiece = track.transform.GetChild(0).gameObject;
             endPiece = track.transform.GetChild(track.transform.childCount - 1).gameObject;
+            boostCheckpoint = startPiece.transform.GetChild(0);
 
             car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 2, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
 
@@ -94,7 +97,9 @@ public class GameManager : MonoBehaviour {
     /// </summary>
     private void GetCheckPoints() {
         for (int i = 1; i < track.transform.childCount - 1; i++) {
-            car.GetComponent<CarAgent>().checkPoints.Add(track.transform.GetChild(i).GetChild(0));
+            CarAgent carAgent = car.GetComponent<CarAgent>();
+            carAgent.checkPoints.Add(track.transform.GetChild(i).GetChild(0));
+            carAgent.boostCheckpoint = boostCheckpoint;
         }
     }
 }

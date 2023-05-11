@@ -13,6 +13,8 @@ public class CarAgent : Agent {
     [SerializeField] private Transform frontOfCar;
 
     private Transform targetCheckpoint;
+    private Transform previousCheckpoint;
+    [HideInInspector] public Transform boostCheckpoint;
 
     private Vector3 checkPointBackVector;
     private Vector3 startPos;
@@ -25,7 +27,8 @@ public class CarAgent : Agent {
     private float startTime = 0f;
 
     [Tooltip("Speed of agent")]
-    private float speed = 30f;
+    private float initSpeed = 100f;
+    [SerializeField] private float speed = 30f;
 
     [Tooltip("Maximum agent velocity")]
     private float maxVelocity = 30f;
@@ -40,15 +43,16 @@ public class CarAgent : Agent {
     private void Start() {
         startPos = transform.position;
         targetCheckpoint = checkPoints[0];
+        previousCheckpoint = boostCheckpoint;
         targetCheckpoint.tag = "Target Checkpoint";
         checkPointBackVector = targetCheckpoint.transform.right.normalized;
-        rb.AddForce(transform.forward * speed);
+        rb.AddForce(transform.forward * speed, ForceMode.Impulse);
     }
 
     int pathLayer = 1 << 6;
     int checkPointLayer = 1 << 7;
     private void Update() {
-        transform.rotation = Quaternion.LookRotation(new Vector3(rb.velocity.x, 0, rb.velocity.z), Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(new Vector3(rb.velocity.x, 0, rb.velocity.z), Vector3.up), 3 * Time.deltaTime);
 
         startTime += Time.deltaTime;
 
@@ -67,7 +71,7 @@ public class CarAgent : Agent {
             checkPointsPassed = 0;
             targetCheckpoint = checkPoints[0];
             targetCheckpoint.tag = "Target Checkpoint";
-            AddReward(-.05f / startTime - rb.velocity.magnitude);
+            AddReward(-.25f / startTime);
             startTime = 0f;
             rb.AddForce(transform.forward * speed);
         } else {
@@ -93,17 +97,14 @@ public class CarAgent : Agent {
 
         ActionSegment<float> vectorAction = actions.ContinuousActions;
 
-        Vector3 movement = new Vector3(vectorAction[0], vectorAction[1], vectorAction[2]);
+        Vector3 movement = new Vector3(vectorAction[0], vectorAction[1], vectorAction[2]).normalized;
 
         speed = vectorAction[3];
 
-        float currentDistance = Vector3.Distance(frontOfCar.transform.position, targetCheckpoint.position);
+        float currentDistanceToCheckpoint = Vector3.Distance(transform.position, targetCheckpoint.position);
+        float currentDistanceToPreviousCheckpoint = Vector3.Distance(transform.position, previousCheckpoint.position);
 
-        rb.AddForce(movement * speed, ForceMode.Acceleration);
-
-        if (speed > 5) {
-            AddReward(0.02f);
-        }
+        rb.AddForce(movement * speed * initSpeed, ForceMode.Acceleration);
 
         //Vector3 leftRayStart = new Vector3(transform.position.x - .5f, transform.position.y - .005f, transform.position.z);
         //Vector3 leftRayEnd = new Vector3(-2, -.25f, 0);
@@ -123,24 +124,52 @@ public class CarAgent : Agent {
         //bool groundRight = Physics.Raycast(rightRayStart, rightRayEnd, 3);
         //bool groundBackward = Physics.Raycast(backwardRayStart, backwardRayEnd, 3);
 
-        bool groundForward = Physics.Raycast(forwardRayStart, forwardRayEnd, 3);
+        //bool groundForward = Physics.Raycast(forwardRayStart, forwardRayEnd, 3);
 
-        if (!groundForward) {
-            Debug.DrawRay(forwardRayStart, forwardRayEnd * 3, Color.green);
-            Debug.Log("NoHitFloor");
-            if (speed > 10) {
-                AddReward(-.5f);
-            }
-        } else {
-            Debug.Log("HitFloor");
-            Debug.DrawRay(forwardRayStart, forwardRayEnd * 3, Color.red);
+        //if (!groundForward) {
+        //    Debug.DrawRay(forwardRayStart, forwardRayEnd * 3, Color.green);
+        //    if (rb.velocity.magnitude > 10) {
+        //        AddReward(-.01f);
+        //    }
+        //} else {
+        //    Debug.DrawRay(forwardRayStart, forwardRayEnd * 3, Color.red);
+        //}
+
+        //float newDistance = Vector3.Distance(transform.position, targetCheckpoint.position);
+
+        float targetDivideValue = 0;
+
+        if (currentDistanceToCheckpoint >= 0 && currentDistanceToCheckpoint < 10) {
+            targetDivideValue = 100000;
+        } else if (currentDistanceToCheckpoint >= 10 && currentDistanceToCheckpoint < 100) {
+            targetDivideValue = 1000000;
+        } else if (currentDistanceToCheckpoint >= 100 && currentDistanceToCheckpoint < 1000) {
+            targetDivideValue = 10000000;
         }
 
-        float newDistance = Vector3.Distance(frontOfCar.transform.position, targetCheckpoint.position);
+        float previousDivideValue = 0;
 
-        if (newDistance < currentDistance) {
-            AddReward(.05f);
+        if (currentDistanceToPreviousCheckpoint >= 0 && currentDistanceToPreviousCheckpoint < 10) {
+            previousDivideValue = 10000;
+        } else if (currentDistanceToPreviousCheckpoint >= 10 && currentDistanceToPreviousCheckpoint < 100) {
+            previousDivideValue = 100000;
+        } else if (currentDistanceToPreviousCheckpoint >= 100 && currentDistanceToPreviousCheckpoint < 1000) {
+            previousDivideValue = 1000000;
         }
+
+
+        AddReward(currentDistanceToPreviousCheckpoint / previousDivideValue);
+        AddReward(-currentDistanceToCheckpoint / targetDivideValue);
+
+        float lookingToCheckpoint = vectorAction[5];
+
+        //if ((lookingToCheckpoint > .9 && lookingToCheckpoint <= 1) || (lookingToCheckpoint < 1.1 && lookingToCheckpoint >= 1)) {
+        //    AddReward(0.01f);
+        //}
+
+        //if (newDistance < currentDistance) {
+        //    AddReward(.05f);
+        //}
     }
 
     public override void CollectObservations(VectorSensor sensor) {
@@ -158,23 +187,23 @@ public class CarAgent : Agent {
 
         sensor.AddObservation(rb.velocity.magnitude);
 
-        Vector3 toCheckPoint = (targetCheckpoint.position - frontOfCar.position).normalized;
-
-        sensor.AddObservation(toCheckPoint);
+        sensor.AddObservation(Vector3.Distance(transform.position, targetCheckpoint.position));
 
         sensor.AddObservation(Vector3.Dot(frontOfCar.forward.normalized, targetCheckpoint.transform.right.normalized));
 
-        sensor.AddObservation(Vector3.Distance(frontOfCar.transform.position, targetCheckpoint.position));
+        Vector3 toCheckPoint = (targetCheckpoint.position - frontOfCar.position).normalized;
+
+        sensor.AddObservation(toCheckPoint);
     }
 
-    private void OnTriggerExit(Collider other) {
+    private void OnTriggerEnter(Collider other) {
 
         if (other.transform == targetCheckpoint) {
             checkPointsPassed++;
             targetCheckpoint.tag = "Default";
+            previousCheckpoint = targetCheckpoint;
             targetCheckpoint = checkPoints[checkPointsPassed];
             checkPointBackVector = targetCheckpoint.transform.right.normalized;
-            AddReward(.05f);
             Debug.Log("Good Boi");
         }
     }
