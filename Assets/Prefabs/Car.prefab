@@ -202,12 +202,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 11
+    VectorObservationSize: 8
     NumStackedVectorObservations: 8
     m_ActionSpec:
-      m_NumContinuousActions: 8
+      m_NumContinuousActions: 7
       BranchSizes: 
-    VectorActionSize: 08000000
+    VectorActionSize: 07000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 1
     hasUpgradedBrainParametersWithActionSpec: 1
@@ -218,7 +218,7 @@ MonoBehaviour:
   TeamId: 0
   m_UseChildSensors: 1
   m_UseChildActuators: 1
-  m_ObservableAttributeHandling: 0
+  m_ObservableAttributeHandling: 2
 --- !u!114 &8939381949824279114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -244,6 +244,7 @@ MonoBehaviour:
   checkPoints: []
   speed: 30
   rotationSpeed: 100
+  pastCheckpoint: 0
 --- !u!114 &8939381949824279112
 MonoBehaviour:
   m_ObjectHideFlags: 0
