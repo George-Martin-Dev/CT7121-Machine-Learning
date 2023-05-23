@@ -205,9 +205,9 @@ MonoBehaviour:
     VectorObservationSize: 8
     NumStackedVectorObservations: 8
     m_ActionSpec:
-      m_NumContinuousActions: 7
+      m_NumContinuousActions: 8
       BranchSizes: 
-    VectorActionSize: 07000000
+    VectorActionSize: 08000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 1
     hasUpgradedBrainParametersWithActionSpec: 1
@@ -242,7 +242,7 @@ MonoBehaviour:
   targetCheckpoint: {fileID: 0}
   boostCheckpoint: {fileID: 0}
   checkPoints: []
-  speed: 30
+  speed: 0
   rotationSpeed: 100
   pastCheckpoint: 0
 --- !u!114 &8939381949824279112

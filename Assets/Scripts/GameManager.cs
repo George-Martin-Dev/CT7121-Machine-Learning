@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour {
             if (i == 0) {
                 spawnPos = Vector3.zero;
             } else {
-                spawnPos = new Vector3(previousSpawnPos.x + 150, previousSpawnPos.y, previousSpawnPos.z);
+                spawnPos = new Vector3(previousSpawnPos.x + 250, previousSpawnPos.y, previousSpawnPos.z);
             }
             track = Instantiate(tracks[trackNumber], spawnPos, Quaternion.Euler(0, -90, 0));
             previousSpawnPos = track.transform.position;
