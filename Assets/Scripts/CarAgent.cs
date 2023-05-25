@@ -15,11 +15,12 @@ public class CarAgent : Agent {
     [SerializeField] private Transform rightSensor;
 
     [SerializeField] private Transform targetCheckpoint;
-    private Transform previousCheckpoint;
+    [SerializeField] private Transform previousCheckpoint;
     [HideInInspector] public Transform boostCheckpoint;
 
     private Vector3 checkPointBackVector;
     private Vector3 startPos;
+    private Vector3 initStartPos;
 
     public List<Transform> checkPoints = new List<Transform>();
 
@@ -43,15 +44,20 @@ public class CarAgent : Agent {
     }
 
     private void Start() {
+
         startPos = transform.position;
+        initStartPos = transform.position;
         targetCheckpoint = checkPoints[0];
         previousCheckpoint = boostCheckpoint;
         targetCheckpoint.tag = "Target Checkpoint";
         rb.AddForce(transform.forward * speed, ForceMode.Impulse);
     }
 
-    int pathLayer = 1 << 6;
-    int checkPointLayer = 1 << 7;
+    private int pathLayer = 1 << 6;
+    private int wallsLayer = 1 << 8;
+    private int checkPointLayer = 1 << 7;
+    private float wallsLeftFloat;
+    private float wallsRightFloat;
     private void FixedUpdate() {
         //Vector3 lookRot = new Vector3(rb.velocity.x, 0, rb.velocity.z);
 
@@ -63,31 +69,40 @@ public class CarAgent : Agent {
 
         startTime += Time.deltaTime;
 
-        Vector3 groundCheckRayPos = new Vector3(transform.position.x, transform.position.y - 0.01f, transform.position.z);
-        Vector3 checkPointRayPos = new Vector3(transform.position.x, transform.position.y + 0.01f, transform.position.z);
+        //Vector3 groundCheckRayPos = new Vector3(transform.position.x, transform.position.y - 0.01f, transform.position.z);
+        //Vector3 checkPointRayPos = new Vector3(transform.position.x, transform.position.y + 0.01f, transform.position.z);
 
-        RaycastHit checkPointHit;
+        //RaycastHit checkPointHit;
 
-        if (!Physics.Raycast(groundCheckRayPos, -Vector3.up, 3, pathLayer)) {
-            Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.red);
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            //speed = UnityEngine.Random.Range(10f, 30f);
-            transform.position = startPos;
-            transform.rotation = Quaternion.identity;
-            checkPointsPassed = 0;
-            targetCheckpoint = checkPoints[0];
-            targetCheckpoint.tag = "Target Checkpoint";
-            AddReward((-.25f / startTime));
-            startTime = 0f;
-            rb.AddForce(transform.forward * speed);
-        } else {
-            Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.green);
+        //if (!Physics.Raycast(groundCheckRayPos, -Vector3.up, 3, pathLayer)) {
+        //    Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.red);
+        //    //rb.velocity = Vector3.zero;
+        //    //rb.angularVelocity = Vector3.zero;
+        //    //transform.position = startPos;
+        //    //transform.rotation = Quaternion.identity;
+        //    //targetCheckpoint.tag = "Target Checkpoint";
+        //    AddReward(-.25f / startTime);
+        //    //startTime = 0f;
+        //    //rb.AddForce(transform.forward * speed);
+        //} else {
+        //    Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.green);
+        //}
+    }
+
+    private void Update() {
+        float velocity = rb.velocity.magnitude;
+        float dot = Vector3.Dot((targetCheckpoint.position - transform.position).normalized, transform.forward);
+        AddReward(Mathf.Abs(rb.velocity.magnitude) * dot * .1f);
+
+        if (velocity < .1f) {
+            AddReward(-0.1f);
         }
     }
 
     private float currentDistanceToCheckpoint;
-    [SerializeField] private bool pastCheckpoint;
+    [SerializeField] private bool pastCheckpoint = true;
+    private bool wallsLeft;
+    private bool wallsRight;
     /// <summary>
     /// Takes and alters values passed in to it by sensor observations.
     /// vectorAction[0] = x rotation
@@ -114,33 +129,34 @@ public class CarAgent : Agent {
         float distanceToPreviousCheckpoint = vectorAction[4];
         currentDistanceToCheckpoint = vectorAction[5];
         float lookDP = vectorAction[6];
+        float lWallHit = vectorAction[7];
+        float rWallHit = vectorAction[8];
 
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(rotation, Vector3.up), 3 * Time.deltaTime);
 
         rb.AddForce(transform.forward * speed * initSpeed, ForceMode.Acceleration);
 
-        bool groundLeft = Physics.Raycast(leftSensor.transform.position, leftSensor.forward, 3, pathLayer);
-        bool groundRight = Physics.Raycast(rightSensor.transform.position, rightSensor.forward, 3, pathLayer);
+        //if (!wallsLeft) {
+        //    Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.green);
+        //    //AddReward(-.025f);
+        //} else {
+        //    Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.red);
+        //}
 
-        if (lookDP > 0.9) {
-            AddReward(.02f);
-        } else {
-            AddReward(-.03f);
-        }
+        //if (!wallsRight) {
+        //    Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.green);
+        //    //AddReward(-.025f);
+        //} else {
+        //    Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.red);
+        //}
 
-        if (!groundLeft) {
-            Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.red);
-            AddReward(-.025f);
-        } else {
-            Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.green);
-        }
+        //if (lWallHit == 1) {
+        //    AddReward(-.02f);
+        //}
 
-        if (!groundRight) {
-            Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.red);
-            AddReward(-.025f);
-        } else {
-            Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.green);
-        }
+        //if (rWallHit == 1) {
+        //    AddReward(-.02f);
+        //}
 
         float previousDivideValue = 0;
 
@@ -152,20 +168,45 @@ public class CarAgent : Agent {
             previousDivideValue = 100000;
         }
 
-        if (speed < 0) {
-            AddReward(-.05f);
-        }
+        //if (speed < 0) {
+        //    AddReward(-.05f);
+        //}
 
         float distanceReward = distanceToPreviousCheckpoint / previousDivideValue;
-        pastCheckpoint = transform.position.z > previousCheckpoint.transform.TransformPoint(previousCheckpoint.forward).z ? true : false;
 
-        if (distanceReward > 0 && pastCheckpoint) {
-            AddReward(distanceReward);
+        //if (distanceReward > 0) {
+        //    AddReward(distanceReward);
+        //}
+
+
+
+        //if (speed * lookDP > 0.9) {
+        //    AddReward(.02f);
+        //} else {
+        //    AddReward(-.02f);
+        //}
+    }
+
+    public override void OnEpisodeBegin() {
+        base.OnEpisodeBegin();
+
+        checkPointsPassed = 0;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        //transform.position = startPos;
+        transform.position = initStartPos;
+        transform.rotation = Quaternion.identity;
+        targetCheckpoint.tag = "Target Checkpoint";
+        targetCheckpoint = checkPoints[0];
+        if (previousCheckpoint.GetComponent<Collider>() != null) {
+            previousCheckpoint.GetComponent<Collider>().enabled = true;
         }
+        previousCheckpoint = boostCheckpoint;
+        startTime = 0f;
+        rb.AddForce(transform.forward * speed);
     }
 
     public override void CollectObservations(VectorSensor sensor) {
-
         if (GM.frozen) {
             return;
         }
@@ -180,16 +221,42 @@ public class CarAgent : Agent {
 
         Vector3 toCheckPoint = (targetCheckpoint.position - transform.position).normalized;
 
-        sensor.AddObservation(Vector3.Dot(toCheckPoint, transform.forward));
+        sensor.AddObservation(Vector3.Dot((targetCheckpoint.position - transform.position).normalized, transform.forward));
+
+        wallsLeft = Physics.Raycast(leftSensor.transform.position, leftSensor.forward, 10, wallsLayer);
+        wallsRight = Physics.Raycast(rightSensor.transform.position, rightSensor.forward, 10, wallsLayer);
+
+        if (wallsLeft) {
+            wallsLeftFloat = 1f;
+        } else {
+            wallsLeftFloat = 0f;
+        }
+
+        if (wallsRight) {
+            wallsRightFloat = 1f;
+        } else {
+            wallsRightFloat = 0f;
+        }
+
+        sensor.AddObservation(wallsLeftFloat);
+        sensor.AddObservation(wallsRightFloat);
     }
 
     private void OnTriggerEnter(Collider other) {
-
         if (other.transform == targetCheckpoint) {
-            checkPointsPassed++;
+            AddReward(10);
+            startPos = new Vector3(targetCheckpoint.transform.position.x, targetCheckpoint.transform.position.y + 3.5f, targetCheckpoint.transform.position.z);
             targetCheckpoint.tag = "Default";
+            if (previousCheckpoint.GetComponent<Collider>() != null) {
+                previousCheckpoint.GetComponent<Collider>().enabled = true;
+            }
             previousCheckpoint = targetCheckpoint;
+            if (previousCheckpoint.GetComponent<Collider>() != null) {
+                previousCheckpoint.GetComponent<Collider>().enabled = false;
+            }
+            checkPointsPassed++;
             targetCheckpoint = checkPoints[checkPointsPassed];
+            previousCheckpoint = checkPoints[checkPointsPassed - 1];
             Debug.Log("Good Boi");
         }
     }

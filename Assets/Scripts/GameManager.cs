@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour {
             if (i == 0) {
                 spawnPos = Vector3.zero;
             } else {
-                spawnPos = new Vector3(previousSpawnPos.x + 250, previousSpawnPos.y, previousSpawnPos.z);
+                spawnPos = new Vector3(previousSpawnPos.x + 400, previousSpawnPos.y, previousSpawnPos.z);
             }
             track = Instantiate(tracks[trackNumber], spawnPos, Quaternion.Euler(0, -90, 0));
             previousSpawnPos = track.transform.position;
@@ -86,7 +86,7 @@ public class GameManager : MonoBehaviour {
             endPiece = track.transform.GetChild(track.transform.childCount - 1).gameObject;
             boostCheckpoint = startPiece.transform.GetChild(0);
 
-            car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 2, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
+            car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 3.5f, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
 
             GetCheckPoints();
         }
@@ -98,6 +98,8 @@ public class GameManager : MonoBehaviour {
     private void GetCheckPoints() {
         for (int i = 1; i < track.transform.childCount - 1; i++) {
             CarAgent carAgent = car.GetComponent<CarAgent>();
+            GameObject checkPoint = track.transform.GetChild(i).GetChild(0).gameObject;
+            checkPoint.name = "checkPoint_" + i;
             carAgent.checkPoints.Add(track.transform.GetChild(i).GetChild(0));
             carAgent.boostCheckpoint = boostCheckpoint;
         }
