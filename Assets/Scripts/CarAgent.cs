@@ -195,12 +195,17 @@ public class CarAgent : Agent {
         rb.angularVelocity = Vector3.zero;
         //transform.position = startPos;
         transform.position = initStartPos;
+        for (int i = 0; i < checkPoints.Count; i++) {
+            Collider checkPointCollider = checkPoints[i].GetComponent<Collider>();
+
+            if (!checkPointCollider.enabled) {
+                checkPointCollider.enabled = true;
+            }
+        }
         transform.rotation = Quaternion.identity;
         targetCheckpoint.tag = "Target Checkpoint";
-        targetCheckpoint = checkPoints[0];
-        if (previousCheckpoint.GetComponent<Collider>() != null) {
-            previousCheckpoint.GetComponent<Collider>().enabled = true;
-        }
+        targetCheckpoint = boostCheckpoint;
+        
         previousCheckpoint = boostCheckpoint;
         startTime = 0f;
         rb.AddForce(transform.forward * speed);
@@ -242,20 +247,19 @@ public class CarAgent : Agent {
         sensor.AddObservation(wallsRightFloat);
     }
 
+    private bool checkPointDisabled;
     private void OnTriggerEnter(Collider other) {
         if (other.transform == targetCheckpoint) {
             AddReward(10);
             startPos = new Vector3(targetCheckpoint.transform.position.x, targetCheckpoint.transform.position.y + 3.5f, targetCheckpoint.transform.position.z);
             targetCheckpoint.tag = "Default";
-            if (previousCheckpoint.GetComponent<Collider>() != null) {
-                previousCheckpoint.GetComponent<Collider>().enabled = true;
-            }
             previousCheckpoint = targetCheckpoint;
             if (previousCheckpoint.GetComponent<Collider>() != null) {
                 previousCheckpoint.GetComponent<Collider>().enabled = false;
             }
             checkPointsPassed++;
             targetCheckpoint = checkPoints[checkPointsPassed];
+            Debug.Log($"Number of checkpoints: {checkPoints.Count}\nCheckpoint number: {checkPointsPassed}");
             previousCheckpoint = checkPoints[checkPointsPassed - 1];
             Debug.Log("Good Boi");
         }

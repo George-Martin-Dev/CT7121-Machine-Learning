@@ -373,7 +373,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 5000
+  MaxStep: 8000
   rb: {fileID: 3719068369275875583}
   frontOfCar: {fileID: 8939381949644324172}
   leftSensor: {fileID: 1596838078158632814}
