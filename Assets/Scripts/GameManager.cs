@@ -86,7 +86,13 @@ public class GameManager : MonoBehaviour {
             endPiece = track.transform.GetChild(track.transform.childCount - 1).gameObject;
             boostCheckpoint = startPiece.transform.GetChild(0);
 
-            car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 3.5f, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
+            if (i == 0) {
+                car = Instantiate(carPrefab, new Vector3(startPiece.transform.position.x, startPiece.transform.position.y + 3.5f, startPiece.transform.position.z), Quaternion.Euler(90, 0, 0));
+            } else {
+                Vector3 startSectionPos = track.transform.GetChild(i + 8).position;
+                Quaternion startSectionRot = track.transform.GetChild(i + 8).rotation;
+                car = Instantiate(carPrefab, new Vector3(startSectionPos.x, startSectionPos.y + 3.5f, startSectionPos.z), startSectionRot);
+            }
 
             GetCheckPoints();
         }
