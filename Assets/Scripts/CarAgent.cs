@@ -59,34 +59,9 @@ public class CarAgent : Agent {
     private float wallsLeftFloat;
     private float wallsRightFloat;
     private void FixedUpdate() {
-        //Vector3 lookRot = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-
-        //if (lookRot != Vector3.zero) {
-        //    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(lookRot, Vector3.up), 3 * Time.deltaTime);
-        //}
-
         rb.velocity = Vector3.ClampMagnitude(rb.velocity, maxVelocity);
 
         startTime += Time.deltaTime;
-
-        //Vector3 groundCheckRayPos = new Vector3(transform.position.x, transform.position.y - 0.01f, transform.position.z);
-        //Vector3 checkPointRayPos = new Vector3(transform.position.x, transform.position.y + 0.01f, transform.position.z);
-
-        //RaycastHit checkPointHit;
-
-        //if (!Physics.Raycast(groundCheckRayPos, -Vector3.up, 3, pathLayer)) {
-        //    Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.red);
-        //    //rb.velocity = Vector3.zero;
-        //    //rb.angularVelocity = Vector3.zero;
-        //    //transform.position = startPos;
-        //    //transform.rotation = Quaternion.identity;
-        //    //targetCheckpoint.tag = "Target Checkpoint";
-        //    AddReward(-.25f / startTime);
-        //    //startTime = 0f;
-        //    //rb.AddForce(transform.forward * speed);
-        //} else {
-        //    Debug.DrawRay(groundCheckRayPos, -Vector3.up * 3, Color.green);
-        //}
     }
 
     private void Update() {
@@ -136,28 +111,6 @@ public class CarAgent : Agent {
 
         rb.AddForce(transform.forward * speed * initSpeed, ForceMode.Acceleration);
 
-        //if (!wallsLeft) {
-        //    Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.green);
-        //    //AddReward(-.025f);
-        //} else {
-        //    Debug.DrawRay(leftSensor.transform.position, leftSensor.forward * 3, Color.red);
-        //}
-
-        //if (!wallsRight) {
-        //    Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.green);
-        //    //AddReward(-.025f);
-        //} else {
-        //    Debug.DrawRay(rightSensor.transform.position, rightSensor.forward * 3, Color.red);
-        //}
-
-        //if (lWallHit == 1) {
-        //    AddReward(-.02f);
-        //}
-
-        //if (rWallHit == 1) {
-        //    AddReward(-.02f);
-        //}
-
         float previousDivideValue = 0;
 
         if (distanceToPreviousCheckpoint >= 0 && distanceToPreviousCheckpoint < 10) {
@@ -167,24 +120,6 @@ public class CarAgent : Agent {
         } else if (distanceToPreviousCheckpoint >= 100 && distanceToPreviousCheckpoint < 1000) {
             previousDivideValue = 100000;
         }
-
-        //if (speed < 0) {
-        //    AddReward(-.05f);
-        //}
-
-        float distanceReward = distanceToPreviousCheckpoint / previousDivideValue;
-
-        //if (distanceReward > 0) {
-        //    AddReward(distanceReward);
-        //}
-
-
-
-        //if (speed * lookDP > 0.9) {
-        //    AddReward(.02f);
-        //} else {
-        //    AddReward(-.02f);
-        //}
     }
 
     public override void OnEpisodeBegin() {
@@ -259,15 +194,8 @@ public class CarAgent : Agent {
             }
             checkPointsPassed++;
             targetCheckpoint = checkPoints[checkPointsPassed];
-            Debug.Log($"Number of checkpoints: {checkPoints.Count}\nCheckpoint number: {checkPointsPassed}");
             previousCheckpoint = checkPoints[checkPointsPassed - 1];
-            Debug.Log("Good Boi");
+            Debug.Log("Checkpoint Passed");
         }
     }
-
-    //private void OnDrawGizmos() {
-    //    Gizmos.color = Color.red;
-    //    Gizmos.DrawRay(leftSensor.transform.position, leftSensor.forward * 3);
-    //    Gizmos.DrawRay(rightSensor.transform.position, rightSensor.forward * 3);
-    //}
 }
